@@ -58,43 +58,62 @@ class Regression:
 
 class LinearRegression(Regression):
     """
-    Linear regression class (can we normalize to 0,1)?
+    Linear regression class (should we normalize to 0,1)?
     """
     
     def __init__(self, file: str) -> None:
         super().__init__(file)
         self.m = 0
         self.b = 0
+        self.alpha = 0.01
 
         # Initialise our x, y
         df = pd.read_csv(self._file)
         self.x = df['x'].to_numpy()
         self.y = df['y'].to_numpy()
+        self.n = len(self.x)
 
     
     def display_graph(self):
         """Display the data from csv as points on the plot"""
-        x, y = self.x, self.y
-        for i in range(len(x)):
-            plt.plot(x[i], y[i], 'o')
-        
+        plt.clf()
+        plt.scatter(self.x, self.y) 
         plt.ylabel("Y")
         plt.show()
 
     def cost_function(self) -> float:
         """Mean squared error cost function for linear regression"""
-        n = len(self.x)
         sum = 0
 
-        for i in range(n):
+        for i in range(self.n):
             sum += (self.current_function(self.x[i]) - self.y[i]) ** 2
         
-        return sum / n
+        return sum / self.n
     
     def current_function(self, x: int) -> int:
         """Calculate the output of our current linear function given x"""
         return (self.m * x) + self.b
 
+    def gradient_descent(self, x: int, y: int):
+        """
+        One iteration of gradient descent for linear regression
+        Updates our parameters self.m and self.y
+        """
+        predictions = self.m * self.x + self.b
+        errors = predictions - self.y
+
+        # Gradients
+        dm = (2/self.n) * np.sum(errors * self.x)
+        db = (2/self.n) * np.sum(errors)
+
+        self.m -= self.alpha * dm
+        self.b -= self.alpha * db
+
+
 if __name__ == '__main__':
     x = LinearRegression(SAMPLE_TEST_PATH3)
-    x.display_graph()
+    for i in range(5):
+        x.display_graph()
+
+    #plt.plot([1, 10], [1, 10])
+    #plt.show()
