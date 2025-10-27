@@ -63,26 +63,38 @@ class LinearRegression(Regression):
     
     def __init__(self, file: str) -> None:
         super().__init__(file)
+        self.m = 0
+        self.b = 0
 
-    def read_csv(self) -> tuple:
-        """Returning a tuple (x, y) of numpy arrays"""
+        # Initialise our x, y
         df = pd.read_csv(self._file)
-        x = df['x'].to_numpy()
-        y = df['y'].to_numpy()
-        return (x, y)
+        self.x = df['x'].to_numpy()
+        self.y = df['y'].to_numpy()
+
     
     def display_graph(self):
         """Display the data from csv as points on the plot"""
-        x, y = self.read_csv()
+        x, y = self.x, self.y
         for i in range(len(x)):
             plt.plot(x[i], y[i], 'o')
         
         plt.ylabel("Y")
         plt.show()
 
+    def cost_function(self) -> float:
+        """Mean squared error cost function for linear regression"""
+        n = len(self.x)
+        sum = 0
+
+        for i in range(n):
+            sum += (self.current_function(self.x[i]) - self.y[i]) ** 2
+        
+        return sum / n
+    
+    def current_function(self, x: int) -> int:
+        """Calculate the output of our current linear function given x"""
+        return (self.m * x) + self.b
+
 if __name__ == '__main__':
     x = LinearRegression(SAMPLE_TEST_PATH3)
     x.display_graph()
-
-
-
