@@ -4,37 +4,9 @@ import pandas as pd
 import csv
 from typing import TextIO
 
-def test():
-    x = [1, 2, 3]
-    y = [1, 2, 3]
-
-    plt.plot(x, y, 'o', label="line1")
-    plt.plot(x, y, label="Fit")
-    plt.ylabel("YYYYYY")
-    plt.show()
-
 SAMPLE_TEST_PATH2 = 'sample/sample2.csv'
 SAMPLE_TEST_PATH3 = 'sample/sample3.csv'
 
-"""
-Goal:
-    plot the numpy array as dots
-    perform gradient descent
-    update the line dynamically using as gradient descent iterates
-
-How to dynamically update?
-
-We can define gradient descent as an iteration
-Use this to update our plot using FuncAnimation
-    - We would set_data(X, y_pred) for y_pred being our updated linreg
-
-We can show the gradient descent by taking contours? and showing a dot move?
-
-TODO:
-
-implement our gradient descent.
-
-"""
 class Regression:
     """
     abstract class for a regression model 
@@ -45,7 +17,7 @@ class Regression:
     def read_csv(self):
         raise NotImplementedError
 
-    def gradient_descent(self, x: int, y: int) -> int:
+    def gradient_descent_step(self) -> int:
         """one iteration of gradient descent"""
         raise NotImplementedError
 
@@ -77,8 +49,9 @@ class LinearRegression(Regression):
     def display_graph(self):
         """Display the data from csv as points on the plot"""
         plt.clf()
-        plt.scatter(self.x, self.y) 
+        plt.scatter(self.x, self.y)
         plt.ylabel("Y")
+        plt.xlabel("X")
         plt.show()
 
     def cost_function(self) -> float:
@@ -94,7 +67,7 @@ class LinearRegression(Regression):
         """Calculate the output of our current linear function given x"""
         return (self.m * x) + self.b
 
-    def gradient_descent(self, x: int, y: int):
+    def gradient_descent_step(self):
         """
         One iteration of gradient descent for linear regression
         Updates our parameters self.m and self.y
@@ -108,12 +81,66 @@ class LinearRegression(Regression):
 
         self.m -= self.alpha * dm
         self.b -= self.alpha * db
+    
+    def train(self, tolerance: float, max_iterations: int):
+        """Train the model and update our graph"""
+        prev_cost = self.cost_function()
 
+        for i in range(max_iterations):
+            
+            self.gradient_descent_step()
+            cost = self.cost_function()
+
+            if abs(prev_cost - cost) < tolerance:
+                # Include print statements here?
+                break
+
+            prev_cost = cost
+    
+    def train_with_animation(self, tolerance: float, max_iterations: int, update_every=10):
+        """Train the model with live animation"""
+        plt.ion()  # Turn on interactive mode
+        fig, ax = plt.subplots()
+
+        prev_cost = self.cost_function()
+        print(f"Initial cost: {prev_cost:.6f}")
+
+        for i in range(max_iterations):
+            self.gradient_descent_step()
+            cost = self.cost_function()
+            
+            # Update plot every N iterations
+            if i % update_every == 0:
+                ax.clear()
+                
+                # Plot data points
+                ax.scatter(self.x, self.y, color='blue', label='Data', s=50, zorder=3)
+                
+                # Plot current regression line
+                y_pred = self.m * self.x + self.b
+                ax.plot(self.x, y_pred, color='red', linewidth=2, 
+                        label=f'Iter {i}: y = {self.m:.2f}x + {self.b:.2f}')
+                
+                ax.set_xlabel("X")
+                ax.set_ylabel("Y")
+                ax.set_title(f'Cost: {cost:.6f}')
+                ax.legend()
+                ax.grid(True, alpha=0.3)
+                
+                plt.pause(0.05)  # Pause to update display
+            
+            if i % 100 == 0:
+                print(f"Iteration {i}: Cost = {cost:.6f}")
+            
+            if abs(prev_cost - cost) < tolerance:
+                print(f"Converged at iteration {i}")
+                break
+            
+            prev_cost = cost
+
+        plt.ioff()  # Turn off interactive mode
+        plt.show()  # Keep final plot open
 
 if __name__ == '__main__':
     x = LinearRegression(SAMPLE_TEST_PATH3)
-    for i in range(5):
-        x.display_graph()
-
-    #plt.plot([1, 10], [1, 10])
-    #plt.show()
+    x.train_with_animation(0.01, 100, 10)
