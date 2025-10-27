@@ -33,11 +33,11 @@ class LinearRegression(Regression):
     Linear regression class (should we normalize to 0,1)?
     """
     
-    def __init__(self, file: str) -> None:
+    def __init__(self, file: str, m=0, b=0, alpha=0.001) -> None:
         super().__init__(file)
-        self.m = 0
-        self.b = 0
-        self.alpha = 0.01
+        self.m = m
+        self.b = b
+        self.alpha = alpha
 
         # Initialise our x, y
         df = pd.read_csv(self._file)
@@ -82,29 +82,25 @@ class LinearRegression(Regression):
         self.m -= self.alpha * dm
         self.b -= self.alpha * db
     
-    def train(self, tolerance: float, max_iterations: int):
-        """Train the model and update our graph"""
-        prev_cost = self.cost_function()
-
-        for i in range(max_iterations):
-            
-            self.gradient_descent_step()
-            cost = self.cost_function()
-
-            if abs(prev_cost - cost) < tolerance:
-                # Include print statements here?
-                break
-
-            prev_cost = cost
-    
     def train_with_animation(self, tolerance: float, max_iterations: int, update_every=10):
         """Train the model with live animation"""
         plt.ion()  # Turn on interactive mode
         fig, ax = plt.subplots()
-
+        
+        # Calculate fixed axis limits BEFORE training
+        x_min, x_max = self.x.min(), self.x.max()
+        y_min, y_max = self.y.min(), self.y.max()
+        
+        # Add padding (10% margin)
+        x_padding = (x_max - x_min) * 0.1
+        y_padding = (y_max - y_min) * 0.1
+        
+        ax.set_xlim(x_min - x_padding, x_max + x_padding)
+        ax.set_ylim(y_min - y_padding, y_max + y_padding)
+        
         prev_cost = self.cost_function()
         print(f"Initial cost: {prev_cost:.6f}")
-
+        
         for i in range(max_iterations):
             self.gradient_descent_step()
             cost = self.cost_function()
@@ -113,13 +109,17 @@ class LinearRegression(Regression):
             if i % update_every == 0:
                 ax.clear()
                 
+                # Re-set the fixed limits after clear()
+                ax.set_xlim(x_min - x_padding, x_max + x_padding)
+                ax.set_ylim(y_min - y_padding, y_max + y_padding)
+                
                 # Plot data points
                 ax.scatter(self.x, self.y, color='blue', label='Data', s=50, zorder=3)
                 
                 # Plot current regression line
                 y_pred = self.m * self.x + self.b
                 ax.plot(self.x, y_pred, color='red', linewidth=2, 
-                        label=f'Iter {i}: y = {self.m:.2f}x + {self.b:.2f}')
+                    label=f'Iter {i}: y = {self.m:.2f}x + {self.b:.2f}')
                 
                 ax.set_xlabel("X")
                 ax.set_ylabel("Y")
@@ -127,7 +127,7 @@ class LinearRegression(Regression):
                 ax.legend()
                 ax.grid(True, alpha=0.3)
                 
-                plt.pause(0.05)  # Pause to update display
+                plt.pause(0.5)  # Pause to update display
             
             if i % 100 == 0:
                 print(f"Iteration {i}: Cost = {cost:.6f}")
@@ -137,10 +137,10 @@ class LinearRegression(Regression):
                 break
             
             prev_cost = cost
-
+        
         plt.ioff()  # Turn off interactive mode
         plt.show()  # Keep final plot open
 
 if __name__ == '__main__':
     x = LinearRegression(SAMPLE_TEST_PATH3)
-    x.train_with_animation(0.01, 100, 10)
+    x.train_with_animation(0.01, 100, 1)
